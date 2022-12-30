@@ -100,6 +100,16 @@ func (p *pgsql) Register(alias ...string) error {
 	return nil
 }
 
+type stderrLog struct{}
+
+func (l stderrLog) Printf(format string, v ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+
+func (l stderrLog) Verbose() bool {
+	return true
+}
+
 // UpgradeSchema calls migrate tool to upgrade schema to the latest based on the SQL scripts.
 func (p *pgsql) UpgradeSchema() error {
 	dbURL := url.URL{
@@ -120,6 +130,7 @@ func (p *pgsql) UpgradeSchema() error {
 	if err != nil {
 		return err
 	}
+	m.Log = stderrLog{}
 	defer func() {
 		srcErr, dbErr := m.Close()
 		if srcErr != nil || dbErr != nil {
